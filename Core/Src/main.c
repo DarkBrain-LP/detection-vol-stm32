@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usart2.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -57,10 +58,12 @@ static void MX_RTC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 RTC_HandleTypeDef our_hrtc;
-RTC_TimeTypeDef sTime = {1,1,10,RTC_FORMAT_BCD, 0,0,NULL,NULL};  // HAL_RTC_DST_Add1Hour(&hrtc)
+RTC_TimeTypeDef sTime = {0,0,0,RTC_FORMAT_BCD, 0,0,RTC_DAYLIGHTSAVING_NONE,RTC_STOREOPERATION_RESET};  // HAL_RTC_DST_Add1Hour(&hrtc)
 RTC_TimeTypeDef timedef;
 RTC_DateTypeDef sDate = {0};
 HAL_StatusTypeDef time;
+GPIO_TypeDef* portA = GPIOA;
+GPIO_PinState btn_poussoir_state;
 //RTC_HandleTypeDef *hrtc;
 /* USER CODE END 0 */
 
@@ -70,6 +73,7 @@ HAL_StatusTypeDef time;
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -94,15 +98,38 @@ int main(void)
   MX_GPIO_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
+  init_usart();
 
+	/*sTime.Hours = 0x0;
+	sTime.Minutes = 0x0;
+	sTime.Seconds = 0x0;
+	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	sTime.TimeFormat = RTC_FORMAT_BCD;*/
+  char time_string[20];
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  RTC_DateTypeDef date;
+	  RTC_TimeTypeDef time1;
+	  uint8_t second = time1.Seconds;
+	  HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BCD);
+	  HAL_RTC_GetTime(&hrtc, &time1, RTC_FORMAT_BCD);
+
+	  btn_poussoir_state = HAL_GPIO_ReadPin(portA, GPIO_PIN_0);
+	  if(btn_poussoir_state == GPIO_PIN_SET)
+	  {
+		  sprintf(time_string, "%02d-%02d-%04d %02d:%02d:%02d\r\n", date.Date, date.Month, 2000 + date.Year, time1.Hours, time1.Minutes, time1.Seconds);
+		  serial_puts(&time_string);
+		  newLine();
+	  }
+
     /* USER CODE END WHILE */
-	  time = HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BCD);
+	  //time = HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BCD);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -193,8 +220,8 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  sTime.Hours = 0x0;
-  sTime.Minutes = 0x0;
+  sTime.Hours = 14;
+  sTime.Minutes = 34;
   sTime.Seconds = 0x0;
   sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   sTime.StoreOperation = RTC_STOREOPERATION_RESET;
@@ -202,10 +229,10 @@ static void MX_RTC_Init(void)
   {
     Error_Handler();
   }
-  sDate.WeekDay = RTC_WEEKDAY_WEDNESDAY;
+  sDate.WeekDay = RTC_WEEKDAY_SUNDAY;
   sDate.Month = RTC_MONTH_MARCH;
-  sDate.Date = 0x19;
-  sDate.Year = 0x1;
+  sDate.Date = 24;
+  sDate.Year = 24;
 
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
   {

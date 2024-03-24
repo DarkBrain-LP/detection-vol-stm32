@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (11.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -60,8 +60,8 @@ all: main-build
 main-build: TP2_DetectionVol.elf secondary-outputs
 
 # Tool invocations
-TP2_DetectionVol.elf TP2_DetectionVol.map: $(OBJS) $(USER_OBJS) E:\Robotique\STM32CubeIDE\workspace_1.14.1\TP2_DetectionVol\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "TP2_DetectionVol.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Robotique\STM32CubeIDE\workspace_1.14.1\TP2_DetectionVol\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TP2_DetectionVol.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+TP2_DetectionVol.elf TP2_DetectionVol.map: $(OBJS) $(USER_OBJS) C:\dev\embedded\detection-vol-stm32\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "TP2_DetectionVol.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\dev\embedded\detection-vol-stm32\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TP2_DetectionVol.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
