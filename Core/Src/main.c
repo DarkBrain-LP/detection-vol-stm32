@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usart2.h"
-
+#include "NOY_rtc.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -58,9 +58,9 @@ static void MX_RTC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 RTC_HandleTypeDef our_hrtc;
-RTC_TimeTypeDef sTime = {0,0,0,RTC_FORMAT_BCD, 0,0,RTC_DAYLIGHTSAVING_NONE,RTC_STOREOPERATION_RESET};  // HAL_RTC_DST_Add1Hour(&hrtc)
+RTC_TimeTypeDef sTime = {22,10,15,RTC_FORMAT_BCD, 0,0,RTC_DAYLIGHTSAVING_NONE,RTC_STOREOPERATION_RESET};  // HAL_RTC_DST_Add1Hour(&hrtc)
 RTC_TimeTypeDef timedef;
-RTC_DateTypeDef sDate = {0};
+RTC_DateTypeDef sDate = {RTC_WEEKDAY_MONDAY, 3, 25, 24};
 HAL_StatusTypeDef time;
 GPIO_TypeDef* portA = GPIOA;
 GPIO_PinState btn_poussoir_state;
@@ -96,29 +96,25 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_RTC_Init();
+  //MX_RTC_Init();
+  int is_init = rtc_init();
   /* USER CODE BEGIN 2 */
   init_usart();
 
-	/*sTime.Hours = 0x0;
-	sTime.Minutes = 0x0;
-	sTime.Seconds = 0x0;
-	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-	sTime.TimeFormat = RTC_FORMAT_BCD;*/
   char time_string[20];
+  RTC_DateTypeDef date;
+  RTC_TimeTypeDef time1;
+  uint8_t second = time1.Seconds;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  RTC_DateTypeDef date;
-	  RTC_TimeTypeDef time1;
-	  uint8_t second = time1.Seconds;
 	  HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BCD);
 	  HAL_RTC_GetTime(&hrtc, &time1, RTC_FORMAT_BCD);
 
+	  HAL_GPIO_WritePin(portA, GPIO_PIN_0, GPIO_PIN_SET);
 	  btn_poussoir_state = HAL_GPIO_ReadPin(portA, GPIO_PIN_0);
 	  if(btn_poussoir_state == GPIO_PIN_SET)
 	  {
