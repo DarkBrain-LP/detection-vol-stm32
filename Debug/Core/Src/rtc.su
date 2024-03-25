@@ -1,0 +1,6 @@
+../Core/Src/rtc.c:12:9:isLeapYear	16	static
+../Core/Src/rtc.c:17:9:maxDaysInMonth	32	static
+../Core/Src/rtc.c:22:6:actualise_time	16	static
+../Core/Src/rtc.c:62:6:print_date	8	static
+../Core/Src/rtc.c:75:6:print_time	8	static
+../Core/Src/rtc.c:89:6:SystemClock_Config	88	static
