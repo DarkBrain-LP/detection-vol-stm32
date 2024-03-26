@@ -57,7 +57,7 @@ static void MX_RTC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-RTC_HandleTypeDef our_hrtc;
+RTC_HandleTypeDef hrtc;
 RTC_TimeTypeDef sTime = {22,10,15,RTC_FORMAT_BCD, 0,0,RTC_DAYLIGHTSAVING_NONE,RTC_STOREOPERATION_RESET};  // HAL_RTC_DST_Add1Hour(&hrtc)
 RTC_TimeTypeDef timedef;
 RTC_DateTypeDef sDate = {RTC_WEEKDAY_MONDAY, 3, 25, 24};
@@ -97,7 +97,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   //MX_RTC_Init();
-  int is_init = rtc_init();
+  int is_init = rtc_init_struct(&sDate, &sTime);
   /* USER CODE BEGIN 2 */
   init_usart();
 
@@ -111,8 +111,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BCD);
-	  HAL_RTC_GetTime(&hrtc, &time1, RTC_FORMAT_BCD);
+	  get_date(&date);
+	  get_time(&time1);
+	  //HAL_RTC_GetTime(&hrtc, &time1, RTC_FORMAT_BCD);
 
 	  HAL_GPIO_WritePin(portA, GPIO_PIN_0, GPIO_PIN_SET);
 	  btn_poussoir_state = HAL_GPIO_ReadPin(portA, GPIO_PIN_0);

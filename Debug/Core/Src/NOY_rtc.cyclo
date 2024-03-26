@@ -1,1 +1,8 @@
-../Core/Src/NOY_rtc.c:7:6:init_rtc	2
+../Core/Src/NOY_rtc.c:9:6:get_date	1
+../Core/Src/NOY_rtc.c:15:6:get_time	1
+../Core/Src/NOY_rtc.c:21:6:rtc_init_configure	3
+../Core/Src/NOY_rtc.c:83:5:rtc_check_init_success	1
+../Core/Src/NOY_rtc.c:87:5:rtc_init	3
+../Core/Src/NOY_rtc.c:169:15:decimal_to_bcd	1
+../Core/Src/NOY_rtc.c:175:5:rtc_init_date	4
+../Core/Src/NOY_rtc.c:265:5:rtc_init_struct	1
