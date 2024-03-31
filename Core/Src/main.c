@@ -53,6 +53,8 @@ typedef struct{
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+void get_date(DateTypeDef *date);
+void get_time(TimeTypeDef *time);
 
 /* USER CODE END PM */
 
@@ -69,6 +71,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 static void init_rtc(void);
+static void init_rtc2(void);
+static void init_rtc3(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -109,11 +113,66 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
   init_rtc();
-  init_usart();
-  /* USER CODE END 2 */
+  init_rtc3();
+  init_usart_int();
+  /* USER CODE END 2
 
+  	if(RTC->ISR & (1<<ISR_INITF_BIT)){
+  		// default time
+		RTC->TR &= 0xFF808080;
+		RTC->TR |=(12<<16) | (0x25<<8);
+
+		// default date
+		RTC->DR &= 0xFF0020C0;
+		RTC->DR |= (0x24<<16) | (3<<8) | (0x31);
+
+		// disable init mode
+		RTC->CR |= RTC_CR_BYPSHAD;
+		RTC->ISR &= ~RTC_ISR_INIT;
+		PWR->CR &= ~PWR_CR_DBP;
+  	}
+  	else{
+	// enable RTC write
+		RTC->WPR = 0xCA;
+		RTC->WPR = 0x53;
+  		// enable init mode
+  	  	RTC->ISR |= (1<<ISR_IN_BIT);
+  	  	while(!( RTC->ISR & (1<<ISR_INITF_BIT) )){};
+  	  // default time
+		RTC->TR &= 0xFF808080;
+		RTC->TR |=(12<<16) | (0x25<<8);
+
+		// default date
+		RTC->DR &= 0xFF0020C0;
+		RTC->DR |= (0x24<<16) | (3<<8) | (0x31);
+
+		// disable init mode
+		RTC->CR |= RTC_CR_BYPSHAD;
+		RTC->ISR &= ~RTC_ISR_INIT;
+		PWR->CR &= ~PWR_CR_DBP;
+  	}
+*/
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t data = 0;
+  uint8_t time_tab[5] = {0};
+  int input_nb = 5;
+  for(int i = 0; i < input_nb; i++){
+	  while(!(USART2->SR & USART_SR_RXNE)){};
+	  data = USART2->DR;
+	  time_tab[i] = data - '0'; // Convert ASCII value to numerical value
+	  USART2->DR = 'A';
+  }
+  /*while(!(USART2->SR & USART_SR_RXNE)){};
+  while (USART2->SR & USART_SR_RXNE) // If data is received
+  {
+	  // Read the received data
+	  data = USART2->DR;
+	  USART2->DR = 'A';
+
+	  // TODO: Parse the received data and set the RTC
+  }
+  */
   while (1)
   {
     /* USER CODE END WHILE */
@@ -182,6 +241,7 @@ void SystemClock_Config(void)
   * @param None
   * @retval None
   */
+
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -319,6 +379,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
+
 /* USER CODE BEGIN 4 */
 static void init_rtc(void)
 {
@@ -350,11 +411,99 @@ static void init_rtc(void)
 
 	// default time
 	RTC->TR &= 0xFF808080;
-	RTC->TR |=(7<<16) | (0x55<<8);
+	RTC->TR |=(11<<16) | (0x10<<8);
 
 	// default date
 	RTC->DR &= 0xFF0020C0;
-	RTC->DR |= (0x24<<16) | (3<<8) | (0x24);
+	RTC->DR |= (0x24<<16) | (3<<8) | (0x30);
+
+	// disable init mode
+	RTC->CR |= RTC_CR_BYPSHAD;
+	RTC->ISR &= ~RTC_ISR_INIT;
+	PWR->CR &= ~PWR_CR_DBP;
+
+}
+
+void USART2_IRQHandler(void)
+{
+    if (USART2->SR & USART_SR_RXNE) // If data is received
+    {
+        // Read the received data
+        uint8_t data = USART2->DR;
+
+        // TODO: Parse the received data and set the RTC
+    }
+}
+
+/* USER CODE BEGIN 4 */
+static void init_rtc3(void)
+{
+	uint8_t asynch_factor = 0x7F; // 0111.1111
+	uint8_t synch_factor = 0xFF; // 1111.1111 255
+	// Low Speed Clock config
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+	PWR->CR |= PWR_CR_DBP;
+	RCC->CSR |= RCC_CSR_LSION;
+	while(!(RCC->CSR & RCC_CSR_LSIRDY)){};
+	RCC->BDCR |= 0x8200;
+
+	// enable RTC write
+	RTC->WPR = 0xCA;
+	RTC->WPR = 0x53;
+
+	// enable init mode
+	RTC->ISR |= (1<<ISR_IN_BIT);
+	while(!( RTC->ISR & (1<<ISR_INITF_BIT) )){};
+
+
+	// program first the asynchronous prescaler factor in RTC_PRER register
+	RTC->PRER &= ~(RTC_PRER_ASYNC_MASK<<RTC_PRER_ASYNC_LSB);
+	RTC->PRER |= asynch_factor<<RTC_PRER_ASYNC_LSB;
+
+	//  program the synchronous prescaler factor
+	RTC->PRER &= ~RTC_PRER_SYNC_MASK;
+	RTC->PRER |= synch_factor;
+
+	// default time
+	RTC->TR &= 0xFF808080;
+	RTC->TR |=(14<<16) | (0x10<<8);
+
+	// default date
+	RTC->DR &= 0xFF0020C0;
+	RTC->DR |= (0x24<<16) | (3<<8) | (0x30);
+
+	// disable init mode
+	RTC->CR |= RTC_CR_BYPSHAD;
+	RTC->ISR &= ~RTC_ISR_INIT;
+	PWR->CR &= ~PWR_CR_DBP;
+
+}
+
+static void init_rtc2(void)
+{
+	uint8_t asynch_factor = 0x7F; // 0111.1111
+	uint8_t synch_factor = 0xFF; // 1111.1111 255
+	// Low Speed Clock config
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+	PWR->CR |= PWR_CR_DBP;
+	RCC->CSR |= RCC_CSR_LSION;
+	while(!(RCC->CSR & RCC_CSR_LSIRDY)){};
+	RCC->BDCR |= 0x8200;
+
+	// enable RTC write
+	RTC->WPR = 0xCA;
+	RTC->WPR = 0x53;
+
+	// enable init mode
+	RTC->ISR |= (1<<ISR_IN_BIT);
+	//while(!( RTC->ISR & (1<<ISR_INITF_BIT) )){};
+	// default time
+	RTC->TR &= 0xFF808080;
+	RTC->TR |=(13<<16) | (0x40<<8);
+
+	// default date
+	RTC->DR &= 0xFF0020C0;
+	RTC->DR |= (0x24<<16) | (3<<8) | (0x31);
 
 	// disable init mode
 	RTC->CR |= RTC_CR_BYPSHAD;
