@@ -9,7 +9,6 @@
 
 extern RTC_TimeTypeDef sTime;
 extern RTC_DateTypeDef sDate;
-extern I2C_HandleTypeDef hi2c1;
 extern RTC_HandleTypeDef hrtc;
 extern UART_HandleTypeDef huart2;
 
@@ -21,14 +20,10 @@ void print_date(void);
 void print_time(void);
 
 
-
 void SystemClock_Config(void);
-/*static void MX_I2C1_Init(void);
-static void MX_RTC_Init(void);
-static void MX_USART2_UART_Init(void);
-static void MX_GPIO_Init(void);
-void Error_Handler(void);
-*/
+void MX_GPIO_Init(void);
+void MX_RTC_Init(void);
+
 #endif
 
 

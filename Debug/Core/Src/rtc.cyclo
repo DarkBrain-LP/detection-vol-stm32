@@ -1,6 +1,9 @@
 ../Core/Src/rtc.c:12:9:isLeapYear	4
 ../Core/Src/rtc.c:17:9:maxDaysInMonth	1
 ../Core/Src/rtc.c:22:6:actualise_time	7
-../Core/Src/rtc.c:62:6:print_date	1
-../Core/Src/rtc.c:75:6:print_time	1
-../Core/Src/rtc.c:89:6:SystemClock_Config	3
+../Core/Src/rtc.c:68:6:print_date	1
+../Core/Src/rtc.c:81:6:print_time	1
+../Core/Src/rtc.c:94:6:Error_Handler	1
+../Core/Src/rtc.c:105:6:SystemClock_Config	3
+../Core/Src/rtc.c:148:6:MX_GPIO_Init	1
+../Core/Src/rtc.c:175:6:MX_RTC_Init	4

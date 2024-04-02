@@ -1,6 +1,5 @@
-../Core/Src/main.c:73:5:main	32	static
-../Core/Src/main.c:142:13:MX_RTC_Init	32	static
-../Core/Src/main.c:200:13:MX_I2C1_Init	8	static
-../Core/Src/main.c:229:13:MX_USART2_UART_Init	8	static
-../Core/Src/main.c:258:13:MX_GPIO_Init	40	static
-../Core/Src/main.c:282:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:91:5:main	88	static
+../Core/Src/main.c:181:13:init_rtc	16	static
+../Core/Src/main.c:227:13:init_rtc_datetime	24	static
+../Core/Src/main.c:280:6:get_date	16	static
+../Core/Src/main.c:287:6:get_time	16	static

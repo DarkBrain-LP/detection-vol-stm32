@@ -51,7 +51,7 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-
+void set_Interrupt(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

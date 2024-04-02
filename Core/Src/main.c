@@ -19,46 +19,64 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "rtc.h"
-#include "usart2.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "usart2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-char time [30];
-char date [30];
-/* USER CODE END PTD */
+typedef struct {
+	uint8_t Year;
+	uint8_t Month;
+	uint8_t Date;
+} DateTypeDef;
+
+
 RTC_TimeTypeDef sTime;
 RTC_DateTypeDef sDate;
+
+typedef struct{
+	uint8_t Hours;
+	uint8_t Minutes;
+	uint8_t Seconds;
+} TimeTypeDef;
+
+/* USER CODE END PTD */
+
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ISR_IN_BIT 7
+#define ISR_INITF_BIT 6
+#define RTC_PRER_ASYNC_LSB 16
+#define RTC_PRER_SYNC_MSB 14
+#define RTC_PRER_SYNC_MASK 0x7FFF
+#define RTC_PRER_ASYNC_MASK 0x7F
+#define RTC_CR_FMT_MASK 6
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+void get_date(DateTypeDef *date);
+void get_time(TimeTypeDef *time);
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
-RTC_HandleTypeDef hrtc;
-UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
 
+GPIO_TypeDef* portA = GPIOA;
+GPIO_PinState btn_poussoir_state;
+int interupt = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
-static void MX_RTC_Init(void);
-static void MX_USART2_UART_Init(void);
-
+void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+static void init_rtc(void);
+static void init_rtc_datetime(DateTypeDef date, TimeTypeDef time);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -72,6 +90,7 @@ static void MX_USART2_UART_Init(void);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -89,208 +108,63 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  TimeTypeDef time = {0};  // HAL_RTC_DST_Add1Hour(&hrtc)
+  DateTypeDef date = {0};
+  char time_string[20];
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C1_Init();
-  MX_RTC_Init();
-  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  init_rtc();
   init_usart();
-  init_usart_int();
   /* USER CODE END 2 */
+
+  uint8_t data = 0;
+  int input_nb = 6;
+  uint8_t time_tab[6] = {0};
+
+  for(int i = 0; i < input_nb; i++){
+	  while(!(USART2->SR & USART_SR_RXNE)){};
+	  data = USART2->DR;
+	  time_tab[i] = data; // Convert ASCII value to numerical value
+	  USART2->DR = 'A';
+  }
+
+  date.Year = time_tab[0];
+  date.Month = time_tab[1];
+  date.Date = time_tab[2];
+
+  time.Hours = time_tab[3];
+  time.Minutes = time_tab[4];
+  time.Seconds = time_tab[5];
+
+  // init rtc with input date
+  init_rtc_datetime(date, time);
+
+
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-  RTC_TimeTypeDef sTime = {0}; // Initialise la structure sTime
-  sTime.Hours = 23;
-  sTime.Minutes = 59;
-  sTime.Seconds = 55;
-
-  sDate.Month = 0x03;
-  sDate.Date = 0x24;
-  sDate.Year = 0x24;
-
-  // Mettre à jour l'heure dans le RTC
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
-      Error_Handler(); // Gérez l'erreur si la fonction HAL échoue
-  }
-
   while (1)
   {
-      // Lire la date actuelle
-      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-      HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+    /* USER CODE END WHILE */
+	  btn_poussoir_state = HAL_GPIO_ReadPin(portA, GPIO_PIN_0);
+	  if(interupt == 1)
+	  {
+		  get_time(&time);
+		  get_date(&date);
+		  sprintf(time_string, "%02d-%02d-%04d %02d:%02d:%02d\r\n", date.Date, date.Month, 2000 + date.Year, time.Hours, time.Minutes, time.Seconds);
+		  serial_puts(&time_string);
+		  newLine();
+		  interupt = 0;
+	  }
 
-      actualise_time();
-
-      // Lire la date actuelle
-      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-      // Mettre à jour la date dans le RTC
-      HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-
-      //HAL_Delay(1000);
-  }
 
     /* USER CODE BEGIN 3 */
-
+  }
   /* USER CODE END 3 */
 }
-static void MX_RTC_Init(void)
-{
-
-  /* USER CODE BEGIN RTC_Init 0 */
-
-  /* USER CODE END RTC_Init 0 */
-
-  RTC_TimeTypeDef sTime = {0};
-  RTC_DateTypeDef sDate = {0};
-
-  /* USER CODE BEGIN RTC_Init 1 */
-
-  /* USER CODE END RTC_Init 1 */
-
-  /** Initialize RTC Only
-  */
-  hrtc.Instance = RTC;
-  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
-  hrtc.Init.AsynchPrediv = 127;
-  hrtc.Init.SynchPrediv = 255;
-  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
-  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-  if (HAL_RTC_Init(&hrtc) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /* USER CODE BEGIN Check_RTC_BKUP */
-
-  /* USER CODE END Check_RTC_BKUP */
-
-  /** Initialize RTC and set the Time and Date
-  */
-  sTime.Hours = 0x00;
-  sTime.Minutes = 0x00;
-  sTime.Seconds = 0x00;
-  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sDate.WeekDay = RTC_WEEKDAY_SUNDAY;
-  sDate.Month = RTC_MONTH_MARCH;
-  sDate.Date = 0x24;
-  sDate.Year = 0x24;
-
-  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN RTC_Init 2 */
-
-  /* USER CODE END RTC_Init 2 */
-
-}
-
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
-}
-
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
-}
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
-}
-
-
 
 /**
   * @brief System Clock Configuration
@@ -298,35 +172,123 @@ void Error_Handler(void)
   */
 
 /**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-
-
-/**
-  * @brief RTC Initialization Function
-  * @param None
-  * @retval None
-  */
-
-
-/**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
   */
 
-
 /* USER CODE BEGIN 4 */
+static void init_rtc(void)
+{
+	uint8_t asynch_factor = 0x7F; // 0111.1111
+	uint8_t synch_factor = 0xFF; // 1111.1111 255
+	// Low Speed Clock config
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+	PWR->CR |= PWR_CR_DBP;
+	RCC->CSR |= RCC_CSR_LSION;
+	while(!(RCC->CSR & RCC_CSR_LSIRDY)){};
+	RCC->BDCR |= 0x8200;
 
+	// enable RTC write
+	RTC->WPR = 0xCA;
+	RTC->WPR = 0x53;
+
+	// enable init mode
+	RTC->ISR |= (1<<ISR_IN_BIT);
+	while(!( RTC->ISR & (1<<ISR_INITF_BIT) )){};
+
+
+	// program first the asynchronous prescaler factor in RTC_PRER register
+	RTC->PRER &= ~(RTC_PRER_ASYNC_MASK<<RTC_PRER_ASYNC_LSB);
+	RTC->PRER |= asynch_factor<<RTC_PRER_ASYNC_LSB;
+
+	//  program the synchronous prescaler factor
+	RTC->PRER &= ~RTC_PRER_SYNC_MASK;
+	RTC->PRER |= synch_factor;
+
+	// default time
+
+
+	RTC->TR &= 0xFF808080;
+	RTC->TR |=(0x16<<16) | (0x27<<8) | (0x00<<8);
+
+	// default date
+
+	RTC->DR &= 0xFF0020C0;
+	RTC->DR |= (0x24<<16) | (4<<8) | (0x2);
+
+	// disable init mode
+	RTC->CR |= RTC_CR_BYPSHAD;
+	RTC->ISR &= ~RTC_ISR_INIT;
+	PWR->CR &= ~PWR_CR_DBP;
+
+}
+
+static void init_rtc_datetime(DateTypeDef date, TimeTypeDef time)
+{
+	uint8_t asynch_factor = 0x7F; // 0111.1111
+	uint8_t synch_factor = 0xFF; // 1111.1111 255
+	// Low Speed Clock config
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+	PWR->CR |= PWR_CR_DBP;
+	RCC->CSR |= RCC_CSR_LSION;
+	while(!(RCC->CSR & RCC_CSR_LSIRDY)){};
+	RCC->BDCR |= 0x8200;
+
+	// enable RTC write
+	RTC->WPR = 0xCA;
+	RTC->WPR = 0x53;
+
+	// enable init mode
+	RTC->ISR |= (1<<ISR_IN_BIT);
+	while(!( RTC->ISR & (1<<ISR_INITF_BIT) )){};
+
+
+	// program first the asynchronous prescaler factor in RTC_PRER register
+	RTC->PRER &= ~(RTC_PRER_ASYNC_MASK<<RTC_PRER_ASYNC_LSB);
+	RTC->PRER |= asynch_factor<<RTC_PRER_ASYNC_LSB;
+
+	//  program the synchronous prescaler factor
+	RTC->PRER &= ~RTC_PRER_SYNC_MASK;
+	RTC->PRER |= synch_factor;
+
+	// default time
+	uint8_t hour = (((time.Hours / 10) & 0x3) << 4) | ((time.Hours % 10) & 0xF);
+	uint8_t minutes = (((time.Minutes / 10) & 0x7) << 4) | ((time.Minutes % 10) & 0xF);
+	uint8_t seconds = (((time.Seconds / 10) & 0x7) << 4) | ((time.Seconds % 10) & 0xF);
+
+	RTC->TR &= 0xFF808080;
+	RTC->TR |=(hour<<16) | (minutes<<8) | seconds;
+
+	// default date
+	uint8_t year = (((date.Year / 10) & 0xF) << 4) | ((date.Year % 10) & 0xF);
+	uint8_t month = (((date.Month / 10) & 0x1) << 4) | ((date.Month % 10) & 0xF);
+	uint8_t day = (((date.Date / 10) & 0x3) << 4) | ((date.Date % 10) & 0xF);
+
+	RTC->DR &= 0xFF0020C0;
+	RTC->DR |= (year<<16) | (month<<8) | (day);
+
+	// disable init mode
+	RTC->CR |= RTC_CR_BYPSHAD;
+	RTC->ISR &= ~RTC_ISR_INIT;
+	PWR->CR &= ~PWR_CR_DBP;
+
+}
+
+
+
+void get_date(DateTypeDef *date){
+
+	date->Year = (((RTC->DR >> 20)&0xF)*10) + ((RTC->DR >> 16)&0xF);
+	date->Month = (10*((RTC->DR >> 12)&1)) + ((RTC->DR >> 8)&0xF);
+	date->Date = (10*((RTC->DR >> 4)&3)) + (RTC->DR & 0xF);
+}
+
+void get_time(TimeTypeDef *time){
+	time->Seconds = (RTC->TR & 0xF) + 10*((RTC->TR >> 4)&7);
+	time->Minutes = ((RTC->TR >> 8)&0xF) + 10*((RTC->TR >> 12)&7);
+	time->Hours = ((RTC->TR >> 16)&0xF) + 10*(((RTC->TR >> 20)&3));
+}
 /* USER CODE END 4 */
 
 /**
