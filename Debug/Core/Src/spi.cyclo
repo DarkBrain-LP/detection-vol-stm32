@@ -1,0 +1,4 @@
+../Core/Src/spi.c:11:6:init_SPI	1
+../Core/Src/spi.c:54:6:SPIwrite	5
+../Core/Src/spi.c:71:9:SPIrw	5
+../Core/Src/spi.c:93:9:SPIread	5

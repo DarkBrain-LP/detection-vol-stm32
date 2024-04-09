@@ -51,9 +51,9 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void set_Interrupt(void);
-/* USER CODE BEGIN EFP */
 
+/* USER CODE BEGIN EFP */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

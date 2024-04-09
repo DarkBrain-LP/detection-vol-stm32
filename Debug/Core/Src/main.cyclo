@@ -1,5 +1,9 @@
-../Core/Src/main.c:91:5:main	4
-../Core/Src/main.c:181:13:init_rtc	3
-../Core/Src/main.c:227:13:init_rtc_datetime	3
-../Core/Src/main.c:280:6:get_date	1
-../Core/Src/main.c:287:6:get_time	1
+../Core/Src/main.c:89:5:main	4
+../Core/Src/main.c:185:6:SystemClock_Config	3
+../Core/Src/main.c:232:13:MX_I2C1_Init	2
+../Core/Src/main.c:266:13:MX_I2S3_Init	2
+../Core/Src/main.c:300:13:MX_RTC_Init	4
+../Core/Src/main.c:363:13:MX_USART2_UART_Init	2
+../Core/Src/main.c:396:13:MX_GPIO_Init	1
+../Core/Src/main.c:435:6:HAL_GPIO_EXTI_Callback	2
+../Core/Src/main.c:454:6:Error_Handler	1

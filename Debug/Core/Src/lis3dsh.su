@@ -1,0 +1,9 @@
+../Core/Src/lis3dsh.c:11:6:init_ACC	8	static
+../Core/Src/lis3dsh.c:57:9:read_ACC_X	16	static
+../Core/Src/lis3dsh.c:77:9:read_ACC_Y	16	static
+../Core/Src/lis3dsh.c:97:9:read_ACC_Z	16	static
+../Core/Src/lis3dsh.c:117:8:get_ACC_X	8	static
+../Core/Src/lis3dsh.c:128:8:get_ACC_Y	8	static
+../Core/Src/lis3dsh.c:139:8:get_ACC_Z	8	static
+../Core/Src/lis3dsh.c:151:6:set_Zmax	24	static
+../Core/Src/lis3dsh.c:173:6:set_Zmin	24	static
